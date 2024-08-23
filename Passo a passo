@@ -1,0 +1,42 @@
+ESP32-MQTT-Conexión
+Código para establecer una conexión entre HiveMQ y ESP32
+
+Este é o meu código, baseado neste código do fórum HiveMQ.
+
+Conexão com MQTT
+Lendo um valor analógico com um fotorresistor
+Escrevendo um valor digital com um LED que liga e desliga
+Características
+Conecte o ESP32 à sua rede WiFi
+Conecte o ESP32 a um servidor MQTT
+Envia os valores de um sinal analógico constantemente após receber um 0 (zero) naquele canal
+Desligue um LED enviando um 0 (zero) para o canal de controle
+Ligue um LED enviando um 1(um) para o canal de controle
+Livrarias
+#include <WiFi.h>
+#include <PubSubClient.h>
+#include <WiFiClientSecure.h>
+En esta tabla encontrarás el origen de las librerías empleadas
+
+Livraria Origem
+Página oficial PubSubClient.h
+Site Guithub Wifi.h e WifiClientSecure.h
+Variáveis ​​para modificar
+As primeiras variáveis ​​a serem modificadas são a conexão Wi-Fi.
+
+const char* ssid = "nome da rede";
+const char* senha = "senha";
+Essas informações são fornecidas pelo HiveMQ e geradas pelo usuário.
+
+const char* mqtt_server = "xxxxxxxxxxxxxxxxxxxxxxxx";
+const int mqtt_port = 8883;
+const char* mqtt_username = "user";
+const char* mqtt_password = "Qwerty123";
+Los canales son para la manipulación de los componentes
+
+const char* CONTROL_LED_TOPIC = "control-led";
+const char* VALOR_ANALOGICO_TOPIC = "valor-analogico";
+Pines de entrada (el fotoresistor) y salida (el led)
+
+const int ledPin = 26;
+const int inputPin = 36;
