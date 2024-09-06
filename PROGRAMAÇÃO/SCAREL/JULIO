@@ -1,0 +1,97 @@
+#include <Arduino.h>
+
+// Definição dos pinos
+#define buttonPin 32 // Pino da botoeira no ESP32
+const int in1 = 12; // IN1 na L298N
+const int in2 = 14; // IN2 na L298N
+const int in3 = 27; // IN3 na L298N
+const int in4 = 26; // IN4 na L298N
+
+// Variáveis para o controle do motor
+int motorSpeed = 1560; // Velocidade fixa do motor (em microssegundos)
+bool motorRunning = false; // Estado do motor
+unsigned long buttonPressTime = 0; // Tempo em que o motor foi ligado
+const unsigned long motorRunDuration = 5000; // Duração do funcionamento do motor (5 segundos)
+bool lastButtonState = HIGH; // Estado anterior do botão
+int motorStartCount = 0; // Contador de quantas vezes o motor ligou
+
+// Sequência de passos para o motor de passo NEMA 17 (Full Step Mode)
+void setStep(int a, int b, int c, int d) {
+  digitalWrite(in1, a);
+  digitalWrite(in2, b);
+  digitalWrite(in3, c);
+  digitalWrite(in4, d);
+}
+
+void setup() {
+  // Configura os pinos como saída
+  pinMode(in1, OUTPUT);
+  pinMode(in2, OUTPUT);
+  pinMode(in3, OUTPUT);
+  pinMode(in4, OUTPUT);
+  
+  // Configura o pino da botoeira como entrada
+  pinMode(buttonPin, INPUT_PULLUP); // Botoeira com resistor de pull-up interno
+  
+  // Inicializa o monitor serial
+  Serial.begin(115200);
+}
+
+void loop() {
+  // Lê o estado atual do botão
+  bool currentButtonState = (digitalRead(buttonPin) == LOW); // Assume que botoeira está pressionada quando o pino está em LOW
+
+  // Detecta a transição do botão de não pressionado para pressionado
+  if (currentButtonState && lastButtonState == HIGH && !motorRunning) {
+    motorRunning = true; // Liga o motor
+    buttonPressTime = millis(); // Salva o tempo atual
+    motorStartCount++; // Incrementa o contador de vezes que o motor ligou
+    Serial.print("Motor Started. Count: ");
+    Serial.println(motorStartCount); // Exibe o contador no monitor serial
+  }
+
+  // Armazena o estado atual do botão para a próxima leitura
+  lastButtonState = currentButtonState;
+
+  // Verifica se o motor deve ser desligado após o tempo especificado
+  if (motorRunning && millis() - buttonPressTime >= motorRunDuration) {
+    motorRunning = false; // Para o motor
+  }
+
+  if (motorRunning) {
+    // Exibe a velocidade do motor e o tempo decorrido no monitor serial
+    Serial.print("Motor Speed: ");
+    Serial.print(motorSpeed);
+    Serial.print(" - Time Elapsed: ");
+    Serial.print(millis() - buttonPressTime);
+    Serial.println(" ms");
+
+    // Controle do motor com velocidade fixa
+    stepMotorClockwise();
+  } else {
+    // Para o motor se o botão não estiver pressionado ou se o tempo de funcionamento tiver passado
+    setStep(0, 0, 0, 0);
+    if (!currentButtonState) {
+      Serial.println("Motor Stopped.");
+    }
+  }
+}
+
+void stepMotorClockwise() {
+  setStep(1, 0, 0, 0);
+  delayMicroseconds(motorSpeed);
+  setStep(1, 1, 0, 0);
+  delayMicroseconds(motorSpeed);
+  setStep(0, 1, 0, 0);
+  delayMicroseconds(motorSpeed);
+  setStep(0, 1, 1, 0);
+  delayMicroseconds(motorSpeed);
+  setStep(0, 0, 1, 0);
+  delayMicroseconds(motorSpeed);
+  setStep(0, 0, 1, 1);
+  delayMicroseconds(motorSpeed);
+  setStep(0, 0, 0, 1);
+  delayMicroseconds(motorSpeed);
+  setStep(1, 0, 0, 1);
+  delayMicroseconds(motorSpeed);
+}
